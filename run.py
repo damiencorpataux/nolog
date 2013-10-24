@@ -36,22 +36,35 @@ def output(output, data=[], options={}):
 def execute(plan):
     """ Execute the plan and returns the output, if any """
     # TODO: Yield data, really
+    #       Make input/filter/output optional because grok can exec: if plan.get('input'): ...
+    # Input
+    print '\n-- Input:%s --' % plan['input']['input']
     raw = input(plan['input']['input'], plan['input'].get('plan', {}))
-    print '-- Input --8<----\n', raw
+    print raw
+    # Filter
+    print '\n-- Filter:%s --' % plan['filter']['filter']
     processed = filter(plan['filter']['filter'], raw, plan['filter'].get('plan', {}))
-    print '-- Filter --8<----\n', len(processed), processed, '\n'
+    print len(processed), processed
+    # Output
+    print '\n-- Output:%s --' % plan['output']['output']
     result = output(plan['output']['output'], processed, plan['output'].get('plan', {}))
-    print '-- Output --8<----\n', len(result), result, '\n'
+    print len(result), result
 
 if __name__ == '__main__':
     plan = {
-        'input': {
+        'input1': {
             'input': 'sshsince',
             'plan': {
                 'file': '/var/log/auth.log',
                 'user': 'damien',
                 'host': 'pistore.local',
                 'pre': 'sudo'
+            }
+        },
+        'input': {
+            'input': 'grok',
+            'plan': {
+                'execute': 'echo Hello world'
             }
         },
         'filter': {
