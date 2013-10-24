@@ -1,5 +1,4 @@
-import subprocess
-import re
+#!/usr/bin/python
 
 def shebang(file):
     with open(file, 'r') as f:
@@ -7,23 +6,15 @@ def shebang(file):
         if spling[0:2] != '#!': raise Exception('No shebang')
         return spling.strip()
 
-# FIXME: Remove this
-#        Legacy of a trial to use shell scripts as input
-def input_shell(file, args=[]):
-    return subprocess.check_output(file)
-    # TODO: Yield it
-    #popen = subprocess.Popen([file], stdout=subprocess.PIPE)
-    #for line in iter(popen.stdout.readline, ""):
-    #    yield line
-
 def input(input, options={}):
+    # import lib.input.{input} as input
+    # http://docs.python.org/2/library/functions.html#__import__
     input = getattr(__import__('lib.input', globals(), locals(), [input], -1), input)
     return input.input(**options)
 
 # FIXME: Use grok as much as possible
 def filter(filter, data=''):
     # import lib.filter.{filter} as filter
-    # http://docs.python.org/2/library/functions.html#__import__
     filter = getattr(__import__('lib.filter', globals(), locals(), [filter], -1), filter)
     lines = data.strip().split('\n')
     processed = []
@@ -33,13 +24,11 @@ def filter(filter, data=''):
         print('Error: parsing log line')
         pass
     return processed
-    # FIXME: Oneliner is nice but but parses all,
-    #        or nothing if there is an error
+    # FIXME: Oneliner is nice but but parses all, or nothing if there is an error
     #return [r.search(line).groupdict() for line in lines]
 
 def output(output, data=[]):
-    # import lib.filter.{output} as output
-    # http://docs.python.org/2/library/functions.html#__import__
+    # import lib.output.{output} as output
     output = getattr(__import__('lib.output', globals(), locals(), [output], -1), output)
     output.output(data)
 
