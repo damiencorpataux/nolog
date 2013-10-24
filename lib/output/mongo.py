@@ -2,8 +2,9 @@
 
 import pymongo
 
-def output(data):
+def output(data, host='localhost', port=27017, db='nolog', collection='data'):
     client = pymongo.MongoClient('localhost', 27017)
-    collection = client['test']['data']
-    for line in data: collection.insert(line)
-    
+    collection = client[db][collection]
+    result = []
+    for line in data: result.append(collection.insert(line))
+    return result
