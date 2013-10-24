@@ -16,5 +16,4 @@ def input(execute='cat -', pattern='.*', reaction='%{@LINE}'):
     with open(file, 'w+') as f:
         f.seek(0)
         f.write(program)
-    print file
     return subprocess.check_output(['grok', '-f', file])

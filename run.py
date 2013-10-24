@@ -37,23 +37,27 @@ def execute(plan):
     """ Execute the plan and returns the output, if any """
     # TODO: Yield data, really
     #       Make input/filter/output optional because grok can exec: if plan.get('input'): ...
+    print 'Executing plan...'
     # Input
-    print '\n-- Input:%s --' % plan['input']['input']
-    raw = input(plan['input']['input'], plan['input'].get('plan', {}))
+    module = plan['input']['module']
+    print '\n-- Input:%s --' % module 
+    raw = input(module, plan['input'].get('plan', {}))
     print raw
     # Filter
-    print '\n-- Filter:%s --' % plan['filter']['filter']
-    processed = filter(plan['filter']['filter'], raw, plan['filter'].get('plan', {}))
+    module = plan['filter']['module'] 
+    print '\n-- Filter:%s --' % module
+    processed = filter(plan['filter']['module'], raw, plan['filter'].get('plan', {}))
     print len(processed), processed
     # Output
-    print '\n-- Output:%s --' % plan['output']['output']
-    result = output(plan['output']['output'], processed, plan['output'].get('plan', {}))
+    module = plan['output']['module'] 
+    print '\n-- Output:%s --' % module
+    result = output(module, processed, plan['output'].get('plan', {}))
     print len(result), result
 
 if __name__ == '__main__':
     plan = {
         'input1': {
-            'input': 'sshsince',
+            'module': 'sshsince',
             'plan': {
                 'file': '/var/log/auth.log',
                 'user': 'damien',
@@ -62,16 +66,16 @@ if __name__ == '__main__':
             }
         },
         'input': {
-            'input': 'grok',
+            'module': 'grok',
             'plan': {
-                'execute': 'echo Hello world'
+                'execute': 'ssh damien@pistore.local sudo since /var/log/auth.log'
             }
         },
         'filter': {
-            'filter': 'authlog',
+            'module': 'authlog',
         },
         'output': {
-            'output': 'mongo',
+            'module': 'mongo',
             'plan': {
                 'db': 'test',
                 'collection': 'data'
