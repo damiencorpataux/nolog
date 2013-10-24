@@ -1,5 +1,2 @@
 Inputs, Outputs and Filters are software components used
 to retrieve, process and store information.
-
-These components can be written in any language,
-therefor it is important that the shebang is correctly written.

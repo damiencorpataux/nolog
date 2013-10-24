@@ -1,32 +1,59 @@
 import subprocess
 import re
 
-def input(file, args=[]):
-    # Unuseful for now, we might check of the interpreter in the future
-    with open(file, 'r') as f: shebang = f.readline()
-    print shebang
-    #
+def shebang(file):
+    with open(file, 'r') as f:
+        spling = f.readline()
+        if spling[0:2] != '#!': raise Exception('No shebang')
+        return spling.strip()
+
+# FIXME: Remove this
+#        Legacy of a trial to use shell scripts as input
+def input_shell(file, args=[]):
     return subprocess.check_output(file)
     # TODO: Yield it
     #popen = subprocess.Popen([file], stdout=subprocess.PIPE)
     #for line in iter(popen.stdout.readline, ""):
     #    yield line
 
-def filter(file, data=[]):
-    lines = data.strip().split('\n')[0:5]
-    # named regex are useful
-    r = re.compile('^(?P<time>\w{3} \d{1,2} \d\d:\d\d:\d\d)\s(?P<data>.*)$')
-    return [r.search(line).groupdict() for line in lines]
+def input(input, options={}):
+    input = getattr(__import__('lib.input', globals(), locals(), [input], -1), input)
+    return input.input(**options)
 
-def output(file, data=[]):
-    return data
+# FIXME: Use grok as much as possible
+def filter(filter, data=''):
+    # import lib.filter.{filter} as filter
+    # http://docs.python.org/2/library/functions.html#__import__
+    filter = getattr(__import__('lib.filter', globals(), locals(), [filter], -1), filter)
+    lines = data.strip().split('\n')
+    processed = []
+    try:
+        for line in lines: processed.append(filter.filter(line))
+    except Exception:
+        print('Error: parsing log line')
+        pass
+    return processed
+    # FIXME: Oneliner is nice but but parses all,
+    #        or nothing if there is an error
+    #return [r.search(line).groupdict() for line in lines]
 
-def execute(file):
-    # TODO: Data has to be yield really
-    raw = input(file)
-    print raw
-    processed = filter(None, raw)
-    print processed, len(processed)
-    output(None, processed)
+def output(output, data=[]):
+    # import lib.filter.{output} as output
+    # http://docs.python.org/2/library/functions.html#__import__
+    output = getattr(__import__('lib.output', globals(), locals(), [output], -1), output)
+    output.output(data)
 
-execute('lib/input/ssh-since')
+def execute():
+    # TODO: Yield data, really
+    raw = input('sshsince', {
+        'file': '/var/log/auth.log',
+        'user': 'damien',
+        'host': 'pistore.local',
+        'pre': 'sudo'
+    })
+    print(raw)
+    processed = filter('authlog', raw)
+    print(processed, len(processed))
+    output('mongo', processed)
+
+execute()
