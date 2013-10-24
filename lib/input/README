@@ -1,0 +1,5 @@
+Inputs collect information and sends a stream them to stdout
+and optionnaly to stderr.
+
+Stream sent to stdout is processed by Filters.
+Stream sent to stderr is sent to logfile 'nolog.{filter}.log'.

@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# This input does ...
+# You might want to add this host .ssh/trusted_hosts
+# and allow sudo without password to $user on $host
+
+# Arguments and default
+user=${user-root}
+host=${host-localhost}
+port=${port-22}
+
+# Log information
+cmd=`echo ssh ${user}@${host} -p${port} ${pre} since ${file}`
+echo "Using ssh and since to retrieve data from $user@$host:$port:$file
+Issuing command:
+$cmd" >&2
+
+# Actual job
+$cmd
