@@ -9,5 +9,9 @@ import subprocess
 def input(command):
     """ Executes a shell command and returns stdout """
     print 'Command: %s' % command
-    # FIXME: stderr must be printed (and thus be logged)
-    return subprocess.check_output(command, shell=True)
+    #return subprocess.check_output(command, shell=True)
+    # FIXME: stderr must be printed (and thus be loggedI)
+    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+    for line in iter(process.stdout.readline, ''):
+        print 'Read: %s' % line
+        yield line

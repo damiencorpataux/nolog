@@ -20,8 +20,8 @@ def input(input, options={}):
 def filter(filter, data='', options={}):
     # import lib.filter.{filter} as filter
     filter = getattr(__import__('lib.filter', globals(), locals(), [filter], -1), filter)
-    lines = data if isinstance(data, list) else data.strip().splitlines()
-    return filter.filter(lines, **options)
+    #lines = data if isinstance(data, list) else data.strip().splitlines()
+    yield filter.filter(data, **options)
     # FIXME: Oneliner is nice but but parses all, or nothing if there is an error
     #return [r.search(line).groupdict() for line in lines]
 
@@ -38,21 +38,21 @@ def execute(plan):
     # Input
     module = plan['input']['module']
     print '\n-- Input:%s --' % module 
-    raw = input(module, plan['input'].get('plan', {}))
-    print raw
+    input_data = input(module, plan['input'].get('plan', {}))
+    print input_data
     # Filter(s)
     filters = plan['filter'] if isinstance(plan['filter'], list) else [plan['filter']]
-    processed = raw
+    filter_data = input_data
     for f in filters:
         module = f['module'] 
         print '\n-- Filter:%s --' % module
-        processed = filter(module, processed, f.get('plan', {}))
-        print len(processed), processed
+        filter_data = filter(module, filter_data, f.get('plan', {}))
+        print filter_data
     # Output
     module = plan['output']['module'] 
     print '\n-- Output:%s --' % module
-    result = output(module, processed, plan['output'].get('plan', {}))
-    print len(result), result
+    inserts = output(module, filter_data, plan['output'].get('plan', {}))
+    for insert in inserts: print insert
 
 def run(plans):
     for plan in plans:
@@ -75,7 +75,7 @@ if __name__ == '__main__':
             'module': 'mongo',
             'plan': {
                 'db': 'test',
-                'collection': 'data'
+                'collection': 'data2'
             }
         }
     }, {
@@ -86,10 +86,10 @@ if __name__ == '__main__':
             }
         },
         'filter': [{
-            'module': 'stacklines',
-            'size': 2
-        }, {
-            'module': 'samba'
+            'module': 'dummy',#'stacklines',
+            'count': 2
+        #}, {
+        #    'module': 'samba'
         }],
         'output': {
             'module': 'mongo',
@@ -100,4 +100,4 @@ if __name__ == '__main__':
         }
     }]
     plans.reverse()
-    run(plans[0:])
+    run(plans[0:1])

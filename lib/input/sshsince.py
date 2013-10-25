@@ -15,4 +15,9 @@ def input(file, host='root@localhost', port='22', pre=''):
     #        use paramiko.SSHClient(): http://stackoverflow.com/a/3586168
     cmd = ['ssh', '-p', port, host, '; '.join(['%s since %s'%(pre,file) for file in files])]
     print 'Command: %s' % cmd
-    return subprocess.check_output(cmd)
+    #return subprocess.check_output(cmd)
+    process = subprocess.Popen(cmd,  stdout=subprocess.PIPE)
+    for line in iter(process.stdout.readline, ''):
+        print 'Read: %s' % line
+        yield line
+

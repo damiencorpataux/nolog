@@ -1,4 +1,10 @@
 #!/usb/bin/python
 
-def filter(lines, size=2):
-    return ['\n'.join(lines[n:n+size]) for n in range(0, len(lines), size)]
+def filter(data, count=2):
+    stack = []
+    for line in data:
+        if len(stack) == count:
+            join = '\n'.join(stack)
+            yield join
+            print 'Stacked: %s' % join 
+            stack = []
