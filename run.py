@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+# FIXME: Logfile name must be saved with logline hash
+#        Input/filters/output names/config and filter process timestamp should be saved
+
 def shebang(file):
     with open(file, 'r') as f:
         spling = f.readline()
@@ -16,21 +19,16 @@ def input(input, options={}):
 def filter(filter, data='', options={}):
     # import lib.filter.{filter} as filter
     filter = getattr(__import__('lib.filter', globals(), locals(), [filter], -1), filter)
+    if not isinstance(data, str): raise Exception('Filter "%s" must return a string' % filter.__name__)
     lines = data.strip().split('\n')
-    processed = []
-    try:
-        for line in lines: processed.append(filter.filter(line, **options))
-    except Exception:
-        # TODO: Log the failed line and the raised exception
-        print('Error: parsing log line')
-        pass
-    return processed
+    return filter.filter(lines, **options)
     # FIXME: Oneliner is nice but but parses all, or nothing if there is an error
     #return [r.search(line).groupdict() for line in lines]
 
 def output(output, data=[], options={}):
     # import lib.output.{output} as output
     output = getattr(__import__('lib.output', globals(), locals(), [output], -1), output)
+    if not isinstance(data, list): raise Exception('Filter "%s" must return a list' % filter.__name__)
     return output.output(data, **options)
 
 def execute(plan):
@@ -54,25 +52,23 @@ def execute(plan):
     result = output(module, processed, plan['output'].get('plan', {}))
     print len(result), result
 
+def run(plans):
+    for plan in plans:
+        execute(plan)
+
 if __name__ == '__main__':
-    plan = {
-        'input1': {
+    plans = [{
+        'input': {
             'module': 'sshsince',
             'plan': {
-                'file': '/var/log/auth.log',
+                'file': ['/var/log/auth.log', '/var/log/syslog', '/var/log/daemon.log', '/var/log/messages'],
                 'user': 'damien',
                 'host': 'pistore.local',
                 'pre': 'sudo'
             }
         },
-        'input': {
-            'module': 'grok',
-            'plan': {
-                'execute': 'ssh damien@pistore.local sudo since /var/log/auth.log'
-            }
-        },
         'filter': {
-            'module': 'authlog',
+            'module': 'syslog',
         },
         'output': {
             'module': 'mongo',
@@ -81,5 +77,23 @@ if __name__ == '__main__':
                 'collection': 'data'
             }
         }
-    }
-    execute(plan)
+    }, {
+        'input': {
+            'module': 'grok',
+            'plan': {
+                #'execute': 'ssh damien@pistore.local sudo find /var/log/samba/log* -exec since {} \;'
+                'execute': 'ssh damien@pistore.local sudo cat /var/log/samba/log.registratura'
+            }
+        },
+        'filter': {
+            'module': 'stacklines',
+        },
+        'output': {
+            'module': 'mongo',
+            'plan': {
+                'db': 'test',
+                'collection': 'data'
+            }
+        }
+    }]
+    run(plans[0:1])
