@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-def output(data):
+def process(data):
     for line in data:
         print 'Output: %s' % line
         yield 'Line printed to stdout'

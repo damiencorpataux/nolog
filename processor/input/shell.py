@@ -6,7 +6,7 @@
 
 import subprocess
 
-def input(command):
+def process(data, command):
     """ Executes a shell command and returns stdout """
     print 'Command: %s' % command
     #return subprocess.check_output(command, shell=True)

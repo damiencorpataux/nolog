@@ -2,7 +2,7 @@
 
 import subprocess
 
-def input(execute='cat -', pattern='.*', reaction='%{@LINE}'):
+def process(data=None, execute='cat -', pattern='.*', reaction='%{@LINE}'):
     file = '/tmp/nolog.grok'
     program = ' \
         program { \

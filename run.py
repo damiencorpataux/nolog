@@ -10,61 +10,29 @@ def shebang(file):
         if spling[0:2] != '#!': raise Exception('No shebang')
         return spling.strip()
 
-def input(input, options={}):
-    # import lib.input.{input} as input
-    # http://docs.python.org/2/library/functions.html#__import__
-    input = getattr(__import__('lib.input', globals(), locals(), [input], -1), input)
-    return input.input(**options)
-
-# FIXME: Use grok as much as possible
-def filter(filter, data='', options={}):
-    # import lib.filter.{filter} as filter
-    filter = getattr(__import__('lib.filter', globals(), locals(), [filter], -1), filter)
-    #lines = data if isinstance(data, list) else data.strip().splitlines()
-    return filter.filter(data, **options)
-    # FIXME: Oneliner is nice but but parses all, or nothing if there is an error
-    #return [r.search(line).groupdict() for line in lines]
-
-def output(output, data=[], options={}):
-    # import lib.output.{output} as output
-    output = getattr(__import__('lib.output', globals(), locals(), [output], -1), output)
-    return output.output(data, **options)
-
 def execute(plan):
-    """ Execute the plan and returns the output """
-    # TODO: Make filter optional because input/grok can exec (input) and filter
-    print 'Executing plan...'
-    print '\n-- Config:'
-    # Input
-    action = plan.get('input')
-    module = action.get('module')
-    options = action.get('options', {})
-    print 'Input: %s, %s' % (module, options)
-    input_data = input(module, options)
-    # Filter(s)
-    action = plan.get('filter')
-    filters = plan['filter'] if isinstance(plan['filter'], list) else [plan['filter']]
-    filter_data = input_data
-    for f in filters:
-        module = action.get('module')
-        options = action.get('options', {})
-        print 'Filter: %s, %s' % (module, plan)
-        filter_data = filter(module, filter_data, options)
-    # Output
-    action = plan.get('output')
-    module = action.get('module')
-    options = action.get('options', {})
-    print 'Output: %s, %s' % (module, options)
-    results = output(module, filter_data, options)
+    # Executes input/filter/output steps
+    data = None
+    for step in ['input', 'filter', 'output']:
+        actions = plan[step] if isinstance(plan[step], list) else [plan[step]]
+        for action in actions:
+            module = action.get('module')
+            options = action.get('options', {})
+            print '- %s: %s, %s' % (step, module, options)
+            # import processor.{step}.{module} as {m}
+            # http://docs.python.org/2/library/functions.html#__import__
+            m = getattr(__import__('.'.join(['processor', step]), globals(), locals(), [module], -1), module)
+            data = m.process(data=data, **options)
     # Results
     print '\n-- Excution:'
-    for result in results:
+    for result in data:
         print 'Done: %s' % result
         print
 
 def run(plans):
     for plan in plans:
         execute(plan)
+    print 'Plan executed.'
 
 if __name__ == '__main__':
     plans = [{
@@ -108,15 +76,21 @@ if __name__ == '__main__':
         }
     }, {
         'input': {
-            'module': 'shell',
-            'options': {'command': 'ssh damien@pistore.local sudo since /var/log/auth.log'}
+            'module': 'shell', 'options': {'command': 'ssh damien@pistore.local sudo tail /var/log/samba/log.smbd'}
+            #'module': 'sshsince', 'options': {
+            #    'file': '/var/log/samba/smb.log',
+            #    'host': 'damien@pistore.local',
+            #    'pre': 'sudo'
+            #}
         },
-        'filter': {
-            'module': 'dummy'
-        },
+        'filter': [{
+            'module': 'stacklines', 'options': {'count':2}
+        }, {
+            'module': 'samba',
+        }],
         'output': {
-            'module': 'stdout'
+            'module': 'mongo'
         }
     }]
     #plans.reverse()
-    run(plans[2:3])
+    run(plans)
