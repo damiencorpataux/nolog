@@ -2,7 +2,7 @@
 
 import subprocess
 
-def input(execute='cat -', pattern='.*', reaction='%{@LINE}'):
+def process(data=None, execute='cat -', pattern='.*', reaction='%{@LINE}'):
     file = '/tmp/nolog.grok'
     program = ' \
         program { \
@@ -16,4 +16,4 @@ def input(execute='cat -', pattern='.*', reaction='%{@LINE}'):
     with open(file, 'w+') as f:
         f.seek(0)
         f.write(program)
-    return subprocess.check_output(['grok', '-f', file])
+    return subprocess.check_output(['grok', '-f', file], stderr=subprocess.STDOUT)

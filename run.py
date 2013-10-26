@@ -10,59 +10,35 @@ def shebang(file):
         if spling[0:2] != '#!': raise Exception('No shebang')
         return spling.strip()
 
-def input(input, options={}):
-    # import lib.input.{input} as input
-    # http://docs.python.org/2/library/functions.html#__import__
-    input = getattr(__import__('lib.input', globals(), locals(), [input], -1), input)
-    return input.input(**options)
-
-# FIXME: Use grok as much as possible
-def filter(filter, data='', options={}):
-    # import lib.filter.{filter} as filter
-    filter = getattr(__import__('lib.filter', globals(), locals(), [filter], -1), filter)
-    lines = data if isinstance(data, list) else data.strip().splitlines()
-    return filter.filter(lines, **options)
-    # FIXME: Oneliner is nice but but parses all, or nothing if there is an error
-    #return [r.search(line).groupdict() for line in lines]
-
-def output(output, data=[], options={}):
-    # import lib.output.{output} as output
-    output = getattr(__import__('lib.output', globals(), locals(), [output], -1), output)
-    return output.output(data, **options)
-
 def execute(plan):
-    """ Execute the plan and returns the output, if any """
-    # TODO: Yield data, really
-    #       Make input/filter/output optional because grok can exec: if plan.get('input'): ...
-    print 'Executing plan...'
-    # Input
-    module = plan['input']['module']
-    print '\n-- Input:%s --' % module 
-    raw = input(module, plan['input'].get('plan', {}))
-    print raw
-    # Filter(s)
-    filters = plan['filter'] if isinstance(plan['filter'], list) else [plan['filter']]
-    processed = raw
-    for f in filters:
-        module = f['module'] 
-        print '\n-- Filter:%s --' % module
-        processed = filter(module, processed, f.get('plan', {}))
-        print len(processed), processed
-    # Output
-    module = plan['output']['module'] 
-    print '\n-- Output:%s --' % module
-    result = output(module, processed, plan['output'].get('plan', {}))
-    print len(result), result
+    # Executes input/filter/output steps
+    data = None
+    for step in ['input', 'filter', 'output']:
+        actions = plan[step] if isinstance(plan[step], list) else [plan[step]]
+        for action in actions:
+            module = action.get('module')
+            options = action.get('options', {})
+            print '- %s: %s, %s' % (step, module, options)
+            # import processor.{step}.{module} as {m}
+            # http://docs.python.org/2/library/functions.html#__import__
+            m = getattr(__import__('.'.join(['processor', step]), globals(), locals(), [module], -1), module)
+            data = m.process(data=data, **options)
+    # Results
+    print '\n-- Excution:'
+    for result in data:
+        print 'Done: %s' % result
+        print
 
 def run(plans):
     for plan in plans:
         execute(plan)
+    print 'Plan executed.'
 
 if __name__ == '__main__':
     plans = [{
         'input': {
             'module': 'sshsince',
-            'plan': {
+            'options': {
                 'file': ['/var/log/auth.log', '/var/log/syslog', '/var/log/daemon.log', '/var/log/messages'],
                 'host': 'damien@pistore.local',
                 'pre': 'sudo'
@@ -73,31 +49,48 @@ if __name__ == '__main__':
         },
         'output': {
             'module': 'mongo',
-            'plan': {
+            'options': {
+                'db': 'test',
+                'collection': 'data2'
+            }
+        }
+    }, {
+        'input': {
+            'module': 'shell',
+            'options': {
+                'command': 'ssh damien@pistore.local sudo find /var/log/samba/ -iname log* -exec "since {} \;"'
+            }
+        },
+        'filter': [{
+            'module': 'dummy',#'stacklines',
+            'count': 2
+        }, {
+            'module': 'samba'
+        }],
+        'output': {
+            'module': 'mongo',
+            'options': {
                 'db': 'test',
                 'collection': 'data'
             }
         }
     }, {
         'input': {
-            'module': 'shell',
-            'plan': {
-                'command': 'ssh damien@pistore.local sudo find /var/log/samba/ -iname log* -exec "since {} \;"'
-            }
+            'module': 'shell', 'options': {'command': 'ssh damien@pistore.local sudo tail /var/log/samba/log.smbd'}
+            #'module': 'sshsince', 'options': {
+            #    'file': '/var/log/samba/smb.log',
+            #    'host': 'damien@pistore.local',
+            #    'pre': 'sudo'
+            #}
         },
         'filter': [{
-            'module': 'stacklines',
-            'size': 2
+            'module': 'stacklines', 'options': {'count':2}
         }, {
-            'module': 'samba'
+            'module': 'samba',
         }],
         'output': {
-            'module': 'mongo',
-            'plan': {
-                'db': 'test',
-                'collection': 'data'
-            }
+            'module': 'mongo'
         }
     }]
-    plans.reverse()
-    run(plans[0:])
+    #plans.reverse()
+    run(plans)

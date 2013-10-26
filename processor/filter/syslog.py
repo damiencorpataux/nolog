@@ -6,12 +6,11 @@ from datetime import datetime
 
 # Example line:
 # Oct 25 07:03:28 localhost nullmailer[2319]: Sending failed:  Host not found
-re_line = re.compile('^(?P<time>\w{3} \d{1,2} \d\d:\d\d:\d\d) (?P<host>.*?) (?P<rawprocess>(?P<process>.\w+)(\[\d+\])?): (?P<message>.*)$')
+regex = re.compile('(?P<time>\w{3} \d{1,2} \d\d:\d\d:\d\d) (?P<host>.*?) (?P<rawprocess>(?P<process>.+?)(\[\d+\])?): (?P<message>.*)')
 
-def filter(lines):
-    data = []
-    for line in lines:
-        m = re_line.search(line).groupdict()
+def process(data):
+    for line in data:
+        m = regex.search(line).groupdict()
         # FIXME: Timezone
         # TODO: Dates should be parsed in a factorized way
         m['timestamp'] = time.mktime(time.strptime(
@@ -19,5 +18,4 @@ def filter(lines):
             '%s %s' % (datetime.now().year, m.get('time')),
             '%Y %b %d %H:%M:%S'
         ))
-        data.append(m)
-    return data
+        yield m
