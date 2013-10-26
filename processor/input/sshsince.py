@@ -13,5 +13,5 @@ def process(data, file, host='root@localhost', port='22', pre=''):
     files = file if isinstance(file, list) else [file]
     # FIXME: Should return stdout, and log stderr
     #        use paramiko.SSHClient(): http://stackoverflow.com/a/3586168
-    cmd = ' '.join(['ssh', '-p', port, host, '; '.join(['%s since %s'%(pre,file) for file in files])])
+    cmd = 'ssh -p %s %s "%s"' % (port, host, '; '.join(['%s since %s'%(pre,file) for file in files]))
     return shell.process(data=None, command=cmd)
