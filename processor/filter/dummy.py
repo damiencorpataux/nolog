@@ -1,4 +1,4 @@
 #!/usb/bin/python
 
-def filter(data):
+def process(data):
     for line in data: yield line

@@ -9,7 +9,7 @@ from datetime import datetime
 #   process_usershare_file: stat of /var/lib/samba/usershares/admin$ failed. No such file or directory
 regex = re.compile('^\[(?P<time>\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}\.\d+)\,\s*\d+\] (?P<message>.*)', re.M|re.DOTALL) #$
 
-def filter(data):
+def process(data):
     for line in data:
         line = '\n'.join([l.strip() for l in line.splitlines()])
         m = regex.search(line).groupdict()

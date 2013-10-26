@@ -1,6 +1,6 @@
 #!/usb/bin/python
 
-def filter(data, count=2):
+def process(data, count=2):
     stack = []
     for line in data:
         stack.append(line)
