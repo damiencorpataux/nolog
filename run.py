@@ -21,7 +21,7 @@ def filter(filter, data='', options={}):
     # import lib.filter.{filter} as filter
     filter = getattr(__import__('lib.filter', globals(), locals(), [filter], -1), filter)
     #lines = data if isinstance(data, list) else data.strip().splitlines()
-    yield filter.filter(data, **options)
+    return filter.filter(data, **options)
     # FIXME: Oneliner is nice but but parses all, or nothing if there is an error
     #return [r.search(line).groupdict() for line in lines]
 
@@ -31,28 +31,36 @@ def output(output, data=[], options={}):
     return output.output(data, **options)
 
 def execute(plan):
-    """ Execute the plan and returns the output, if any """
-    # TODO: Yield data, really
-    #       Make input/filter/output optional because grok can exec: if plan.get('input'): ...
+    """ Execute the plan and returns the output """
+    # TODO: Make filter optional because input/grok can exec (input) and filter
     print 'Executing plan...'
+    print '\n-- Config:'
     # Input
-    module = plan['input']['module']
-    print '\n-- Input:%s --' % module 
-    input_data = input(module, plan['input'].get('plan', {}))
-    print input_data
+    action = plan.get('input')
+    module = action.get('module')
+    options = action.get('options', {})
+    print 'Input: %s, %s' % (module, options)
+    input_data = input(module, options)
     # Filter(s)
+    action = plan.get('filter')
     filters = plan['filter'] if isinstance(plan['filter'], list) else [plan['filter']]
     filter_data = input_data
     for f in filters:
-        module = f['module'] 
-        print '\n-- Filter:%s --' % module
-        filter_data = filter(module, filter_data, f.get('plan', {}))
-        print filter_data
+        module = action.get('module')
+        options = action.get('options', {})
+        print 'Filter: %s, %s' % (module, plan)
+        filter_data = filter(module, filter_data, options)
     # Output
-    module = plan['output']['module'] 
-    print '\n-- Output:%s --' % module
-    inserts = output(module, filter_data, plan['output'].get('plan', {}))
-    for insert in inserts: print insert
+    action = plan.get('output')
+    module = action.get('module')
+    options = action.get('options', {})
+    print 'Output: %s, %s' % (module, options)
+    results = output(module, filter_data, options)
+    # Results
+    print '\n-- Excution:'
+    for result in results:
+        print 'Done: %s' % result
+        print
 
 def run(plans):
     for plan in plans:
@@ -62,7 +70,7 @@ if __name__ == '__main__':
     plans = [{
         'input': {
             'module': 'sshsince',
-            'plan': {
+            'options': {
                 'file': ['/var/log/auth.log', '/var/log/syslog', '/var/log/daemon.log', '/var/log/messages'],
                 'host': 'damien@pistore.local',
                 'pre': 'sudo'
@@ -73,7 +81,7 @@ if __name__ == '__main__':
         },
         'output': {
             'module': 'mongo',
-            'plan': {
+            'options': {
                 'db': 'test',
                 'collection': 'data2'
             }
@@ -81,23 +89,34 @@ if __name__ == '__main__':
     }, {
         'input': {
             'module': 'shell',
-            'plan': {
+            'options': {
                 'command': 'ssh damien@pistore.local sudo find /var/log/samba/ -iname log* -exec "since {} \;"'
             }
         },
         'filter': [{
             'module': 'dummy',#'stacklines',
             'count': 2
-        #}, {
-        #    'module': 'samba'
+        }, {
+            'module': 'samba'
         }],
         'output': {
             'module': 'mongo',
-            'plan': {
+            'options': {
                 'db': 'test',
                 'collection': 'data'
             }
         }
+    }, {
+        'input': {
+            'module': 'shell',
+            'options': {'command': 'ssh damien@pistore.local sudo since /var/log/auth.log'}
+        },
+        'filter': {
+            'module': 'dummy'
+        },
+        'output': {
+            'module': 'stdout'
+        }
     }]
-    plans.reverse()
-    run(plans[0:1])
+    #plans.reverse()
+    run(plans[2:3])

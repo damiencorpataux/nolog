@@ -13,5 +13,6 @@ def input(command):
     # FIXME: stderr must be printed (and thus be loggedI)
     process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
     for line in iter(process.stdout.readline, ''):
+        line = line.strip()
         print 'Read: %s' % line
         yield line
