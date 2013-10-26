@@ -18,5 +18,4 @@ def filter(data):
             '%s %s' % (datetime.now().year, m.get('time')),
             '%Y %b %d %H:%M:%S'
         ))
-        print 'Matched: %s' % m
         yield m
