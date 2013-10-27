@@ -5,12 +5,6 @@
 #          (e.g. log filename, process timestamp and source hostname, processing timestamp, input/filters/outputs names and configs)
 #        - Stdout should be logged (eg. enything print'ed)
 
-def shebang(file):
-    with open(file, 'r') as f:
-        spling = f.readline()
-        if spling[0:2] != '#!': raise Exception('No shebang')
-        return spling.strip()
-
 def execute(plan):
     print '\n-- Plan:'
     # Executes input/filter/output steps
@@ -40,5 +34,4 @@ def run(plans):
 
 if __name__ == '__main__':
     from conf.sample import plan
-    print plan
     run(plan)
