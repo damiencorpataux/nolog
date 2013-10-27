@@ -5,8 +5,16 @@
 #          (e.g. log filename, process timestamp and source hostname, processing timestamp, input/filters/outputs names and configs)
 #        - Stdout should be logged (eg. enything print'ed)
 
+import logging as log
+#log = logging.getLogger(__name__)
+#numeric_level = getattr(log, loglevel.upper(), None)
+#if not isinstance(numeric_level, int): raise ValueError('Invalid log level: %s' % loglevel)
+#log.basicConfig(level=numeric_level)
+
 def execute(plan):
-    print '\n-- Plan:'
+    log.info('Executing plan')
+    log.debug('Plan: %s' % plan)
+    log.warning('False alert, this is just a test')
     # Executes input/filter/output steps
     data = None
     for step in ['input', 'filter', 'output']:
@@ -30,7 +38,7 @@ def execute(plan):
 def run(plans):
     for plan in plans:
         execute(plan)
-    print '\nPlan executed.'
+    log.info('Plan executed')
 
 if __name__ == '__main__':
     from conf.sample import plan
