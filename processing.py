@@ -4,6 +4,11 @@
 #        - A filter should add necessary information to data
 #          (e.g. log filename, process timestamp and source hostname, processing timestamp, input/filters/outputs names and configs)
 #        - Stdout should be logged (eg. enything print'ed)
+#        - in execute(), rename the 'actions' variable to module, and 'module' attr to 'name', and
+#          in conf/sample.py, rename the 'module' attr to 'name'
+#          because this engine pipes modules
+
+
 
 def execute(plan):
     print '\n-- Plan:'
