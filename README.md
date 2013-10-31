@@ -9,7 +9,7 @@ Debian example:
 sudo apt-get install \
 python \
 mongodb \
-grok
+groka
 
 sudo apt-get install pip
 pip install pymongo
@@ -22,9 +22,13 @@ cd ~
 git clone git@github.com:damiencorpataux/nolog.git
 cd nolog.git
 ```
-*Install dependencies first*
 
 # Data harvest
+Being a simple but powerful pipe, nolog allows you to combine inputs, filters and output to fit your data collecting needs.
+
+### Data pull
+In this situation, the monitor node(s) pull data from monitored node(s).
+
 Edit ```conf/sample.py````and update the plan to your needs.
 ```
 TODO: Comment conf/sample.py well and put it here as a gist
@@ -54,5 +58,60 @@ switched to db nolog
 has more
 ```
 
+### Data pull
+In this situation, the monitored node(s) push data to the monitoring node(s). At this stage of development, some inputs and outputs have to be written.
+
+The idea is to combine input/outputs like so:
+```
+# This plan filters data on monitored node and inserts the result directly
+# in the monitoring node mongo collection
+plan = {
+    'input': [{
+        'module': 'shell', 'options': { command: 'since /var/log/syslog' }
+    }],
+    'filter': [{
+        'module': 'syslog'
+    }],
+    'output': [{
+        'module': 'mongo', 'options': { 'host': 'monitor.local' }
+    }]
+}
+```
+
+Or if you want your monitored nodes to process as little as possible:
+```
+# This plan is executed (cron) on the monited node and pushed raw loglines
+# to the moniting node by appending data to a file 
+plan = {
+    'input': [{
+        'module': 'shell', 'options': { command: 'since /var/log/syslog' }
+    }],
+    'filter': [
+        # no data filtering
+    ],
+    'output': [{
+        # This input should: append data to a file on monitor.local
+        # (creating the file if necessary)
+        'module': 'sshappend', 'options': { 'host': 'monitor.local', 'file': '/tmp/nodename/syslog }
+    }]
+}
+
+# This plan is executed (cron) on the moniting node, it parses pushed loglines
+# and outputs the data to mongo collection
+plan = {
+    'input': [{
+        'module': 'shell', 'options': { command: 'cat /tmp/nodename/syslog' }
+    }],
+    'filter': [
+        'module': 'syslog'
+    ],
+    'output': [{
+        'module': 'mongo'
+        # The processed loglines are stripped from file upon completion
+        'module': 'stripline', 'options': { 'command': 'rm /tmp/nodename/syslog }
+    }]
+}
+```
+
 # Name
-Because it is developed lurking at logstash, a nice name would be logpystash
+Because it is developed lurking at logstash, a nice name would be logpystash *(as in pistache nuts)*
