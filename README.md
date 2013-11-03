@@ -80,7 +80,7 @@ plan = {
 
 Or if you want your monitored nodes to process as little as possible:
 ```
-# This plan is executed (cron) on the monited node and pushed raw loglines
+# This plan is executed (cron) on the monited node and pushes raw loglines
 # to the moniting node by appending data to a file 
 plan = {
     'input': [{
@@ -108,7 +108,7 @@ plan = {
     'output': [{
         'module': 'mongo'
         # The processed loglines are stripped from file upon completion
-        'module': 'stripline', 'options': { 'command': 'rm /tmp/nodename/syslog }
+        'module': 'stripline', 'options': { 'file': '/tmp/nodename/syslog }
     }]
 }
 ```
