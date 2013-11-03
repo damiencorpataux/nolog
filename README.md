@@ -114,4 +114,6 @@ plan = {
 ```
 
 # Name
-Because it is developed lurking at logstash, a nice name would be logpystash *(as in pistache nuts)*
+Because it is developed lurking at logstash, a nice name would be logpystash (as in pistache nuts).
+
+Also, this software could be named pype, because it is in fact a *python pipe* engine.
